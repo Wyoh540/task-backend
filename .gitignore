@@ -1,0 +1,10 @@
+/.venv/
+.env
+**.pytest_cache**
+report
+**versions**
+.idea
+**__pycache__**
+
+# database
+sql_app.db
