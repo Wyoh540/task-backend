@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, TEXT
@@ -46,6 +47,7 @@ class TaskBase(SQLModel):
 
 
 class TaskOut(TaskBase):
+    id: uuid.UUID
     language: Language
     group: TaskGroup
     owner: UserPubic

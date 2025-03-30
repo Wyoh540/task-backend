@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter
 from sqlmodel import select
 from fastapi_pagination import Page
@@ -8,6 +10,7 @@ from app.api.deps import SessionDep, CurrentUser
 from app.models import Task, TaskGroup
 from app.schemas import TaskGroupCreate, TaskGroupPubilc, TaskCreate, TaskOut
 from app.services.task import TaskService
+from app.tasks.task import execute_script_content
 
 router = APIRouter(prefix="/group", tags=["Tasks"])
 
@@ -52,3 +55,14 @@ def create_task(session: SessionDep, group_id: int, task_obj: TaskCreate, curren
     )
 
     return task
+
+
+@router.post("/{group_id}/task/{task_id}")
+def run_task(session: SessionDep, group_id: int, task_id: uuid.UUID):
+    """运行任务"""
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    result = execute_script_content.delay(task.task_script, "python", {"timeout": 10})
+    print(result)
+    return {"hello"}
