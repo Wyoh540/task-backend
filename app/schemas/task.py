@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, TEXT
 
-from app.models.task import Language, TaskGroup
+from app.models.task import Language, TaskGroup, WorkNode
 from app.schemas.user import UserPubic
 
 
@@ -59,3 +59,12 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(TaskBase):
     pass
+
+
+
+class WorkNodeCreate(SQLModel):
+    """工作节点创建"""
+
+    node_ip: str
+    node_name: str
+    status: WorkNode.NodeStatus = WorkNode.NodeStatus.ONLINE

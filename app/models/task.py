@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, Relationship
@@ -45,3 +46,23 @@ class Task(SQLModel, table=True):
     language: Language = Relationship()
     group: TaskGroup = Relationship()
     owner: User = Relationship()
+
+
+class WorkNode(SQLModel, table=True):
+    """工作节点表"""
+
+    class NodeStatus(int, Enum):
+        """节点状态"""
+        ONLINE = 1
+        OFFLINE = 2
+        
+
+    id: int | None = Field(primary_key=True, default=None, description="工作节点ID")
+    node_ip: str = Field(max_length=15, nullable=False, unique=True, description="节点IP地址")
+    node_name: str = Field(max_length=60, nullable=False)
+    status: NodeStatus = Field(default=NodeStatus.OFFLINE, nullable=False, description="节点状态, 1:在线, 2: 离线")
+    last_ping: datetime | None = Field(default=None, nullable=True, description="最后心跳时间")
+    platform: str | None = Field(default=None, nullable=True, description="操作系统平台")
+    
+    create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    update_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

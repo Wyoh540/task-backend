@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
-from app.models.task import Task, TaskGroup
-from app.schemas.task import TaskCreate, TaskGroupCreate
+from app.models.task import Task, TaskGroup, WorkNode
+from app.schemas.task import TaskCreate, TaskGroupCreate, WorkNodeCreate
 
 
 class TaskService:
@@ -30,3 +30,29 @@ class TaskService:
             db.commit()
             db.refresh(task)
         return task
+
+
+class WorkNodeService:
+    """工作节点管理"""
+
+    @classmethod
+    def create_node(cls, db: Session, node_create: WorkNodeCreate) -> WorkNode:
+        node = db.exec(
+            select(WorkNode).where(WorkNode.node_ip == node_create.node_ip)
+        )
+        if not node.first():
+            node = WorkNode.model_validate(node_create)
+            db.add(node)
+            db.commit()
+            db.refresh(node)
+        return node
+
+    @classmethod
+    def update_node(cls, db: Session, node_id: int, node_update) -> None:
+        # Placeholder for updating a work node
+        pass
+
+    @classmethod
+    def delete_node(cls, db: Session, node_id: int) -> None:
+        # Placeholder for deleting a work node
+        pass
