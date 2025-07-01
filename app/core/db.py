@@ -20,7 +20,7 @@ def init_db(session: Session) -> None:
     # SQLModel.metadata.create_all(engine)
 
     user_in = UserCreate(
-        email=settings.FIRST_SUPERUSER,
+        username=settings.FIRST_SUPERUSER,
         password=settings.FIRST_SUPERUSER_PASSWORD,
         is_superuser=True,
     )

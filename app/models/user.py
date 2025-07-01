@@ -13,9 +13,9 @@ class User(SQLModel, table=True):
         VIP = 2
 
     id: int | None = Field(primary_key=True, default=None)
-    username: str | None = Field(max_length=24, default=None)
-    email: EmailStr | None = Field(max_length=50, default=None)
-    phone: str | None = Field(max_length=20, default=None)
+    username: str = Field(max_length=24, unique=True, default=None)
+    email: EmailStr | None = Field(max_length=50, unique=True, default=None)
+    phone: str | None = Field(max_length=20, unique=True, default=None)
     level: LevelEnum = Field(sa_column=Column(Integer), default=LevelEnum.USER.value)
     hashed_password: str
     is_active: bool = True

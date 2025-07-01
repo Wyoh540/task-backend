@@ -1,12 +1,10 @@
-import psutil
-
 from fastapi import APIRouter
 from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination import Page
 from sqlmodel import select
 
 from app.api.deps import SessionDep
-from app.models.task import WorkNode
+from app.models.job import WorkNode
 
 router = APIRouter(prefix="/worker", tags=["Worker"])
 

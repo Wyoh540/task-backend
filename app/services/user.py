@@ -12,11 +12,9 @@ class UserService:
     @classmethod
     def create_user(cls, db: Session, user_create: UserCreate) -> UserPubic:
         """创建用户"""
-        user = db.exec(select(User).where(User.email == user_create.email)).first()
+        user = db.exec(select(User).where(User.username == user_create.username)).first()
         if not user:
-            user = User.model_validate(
-                user_create, update={"hashed_password": get_password_hash(user_create.password)}
-            )
+            user = User.model_validate(user_create, update={"hashed_password": get_password_hash(user_create.password)})
             db.add(user)
             db.commit()
             db.refresh(user)

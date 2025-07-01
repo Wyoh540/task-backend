@@ -9,7 +9,6 @@ import re
 
 from app.celery import celery_app
 
-
 # 安全配置
 MAX_EXECUTION_TIME = 30  # 秒
 MAX_OUTPUT_SIZE = 1024 * 1024  # 1MB

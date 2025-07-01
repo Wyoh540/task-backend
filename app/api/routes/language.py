@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from sqlmodel import select
 
 from app.api.deps import SessionDep
-from app.models.task import Language
+from app.models.job import Language
 
 router = APIRouter(prefix="/language", tags=["Language"])
 

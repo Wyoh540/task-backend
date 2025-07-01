@@ -20,7 +20,7 @@ def login_access_token(
 ) -> schemas.Token:
     # Your logic to validate the user and generate a token goes here.
 
-    user = login.authenticate(session=session, email=form_data.username, password=form_data.password)
+    user = login.authenticate(session=session, username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
     elif not user.is_active:

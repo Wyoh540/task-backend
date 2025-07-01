@@ -18,7 +18,6 @@ def parse_cors(v: Any) -> list[str] | str:
 
 
 class Settings(BaseSettings):
-
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
         env_file="../.env",
@@ -51,11 +50,13 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: str = None
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
-    FIRST_SUPERUSER: EmailStr = "admin@example.com"
-    FIRST_SUPERUSER_PASSWORD: str = "admin"
+    FIRST_SUPERUSER: str = "admin"
+    FIRST_SUPERUSER_PASSWORD: str = "admin@123"
     USERS_OPEN_REGISTRATION: bool = False
 
+    # Celery 配置
     REDIS_BROKER_URL: str = None
+    RESULT_BACKEND_URL: str = None
 
 
 settings = Settings()

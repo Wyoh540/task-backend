@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import items, users, login, task, language, worker
+from app.api.routes import items, jobs, users, login, language, worker
 
 # from app.core.config import settings
 
@@ -12,7 +12,7 @@ api_router.include_router(users.router)
 # api_router.include_router(utils.router)
 api_router.include_router(items.router)
 
-api_router.include_router(task.router)
+api_router.include_router(jobs.router)
 api_router.include_router(language.router)
 
 api_router.include_router(worker.router)

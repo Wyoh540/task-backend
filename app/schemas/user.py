@@ -12,7 +12,8 @@ class UserBase(SQLModel):
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    email: EmailStr
+    username: str
+    email: EmailStr | None = None
     password: str
 
 
