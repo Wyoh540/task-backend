@@ -19,15 +19,15 @@ class JobService:
         return team
 
     @classmethod
-    def create_Job(cls, db: Session, Job_create: JobCreate, team_id: int, user_id: int) -> Job:
+    def create_job(cls, db: Session, job_create: JobCreate, team_id: int, user_id: int) -> Job:
         """创建任务"""
-        Job = db.exec(select(Job).where(Job == Job_create.Job_name, Job.team_id == team_id)).first()
-        if not Job:
-            Job = Job.model_validate(Job_create, update={"team_id": team_id, "owner_id": user_id})
-            db.add(Job)
+        job = db.exec(select(Job).where(Job.name == job_create.name, Job.team_id == team_id)).first()
+        if not job:
+            job = Job.model_validate(job_create, update={"team_id": team_id, "owner_id": user_id})
+            db.add(job)
             db.commit()
-            db.refresh(Job)
-        return Job
+            db.refresh(job)
+        return job
 
 
 class WorkNodeService:

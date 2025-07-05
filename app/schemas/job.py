@@ -42,14 +42,14 @@ class TeamPubilc(TeamBase):
 
 
 class JobBase(SQLModel):
-    task_name: str
+    name: str
     description: str | None = None
-    task_script: str | None = None
+    script_content: str | None = None
     script_path: str | None = None
 
 
 class JobOut(JobBase):
-    id: uuid.UUID
+    id: int
     language: Language
     team: Team
     owner: UserPubic
@@ -74,7 +74,7 @@ class WorkNodeCreate(SQLModel):
 class TaskResult(SQLModel):
     """任务执行结果"""
 
-    run_id: uuid.UUID
+    task_id: uuid.UUID
     status: str
     result: Any | None = None
     date_done: datetime | None = None

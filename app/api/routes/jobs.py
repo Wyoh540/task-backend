@@ -56,9 +56,9 @@ def get_tasks(session: SessionDep, team_id: int):
 
 
 @router.post("/{team_id}/job", response_model=JobOut)
-def create_task(session: SessionDep, team_id: int, task_obj: JobCreate, current_user: CurrentUser):
+def create_task(session: SessionDep, team_id: int, job_obj: JobCreate, current_user: CurrentUser):
     """创建任务"""
-    job = JobService.create_task(db=session, task_create=task_obj, team_id=team_id, user_id=current_user.id)
+    job = JobService.create_job(db=session, job_create=job_obj, team_id=team_id, user_id=current_user.id)
 
     return job
 
@@ -70,7 +70,7 @@ def run_task(session: SessionDep, team_id: int, job_id: int):
     if not task:
         raise HTTPException(status_code=404, detail="Job not found")
     result = execute_script_content.apply_async(
-        (task.task_script, "python", {"timeout": 10}), ignore_result=task.ignore_result
+        (task.script_content, "python", {"timeout": 10}), ignore_result=task.ignore_result
     )
     return {
         "run_id": result.id,
