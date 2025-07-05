@@ -1,4 +1,3 @@
-import secrets
 from typing import Literal, Any, Annotated
 
 from pydantic import AnyHttpUrl, EmailStr, AnyUrl, BeforeValidator, computed_field
@@ -27,7 +26,7 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = 'ipCP7MRp6f95HDVqqgnKTmmXAXZwX3Br1Dr_NZ-EtzE'
+    SECRET_KEY: str = "ipCP7MRp6f95HDVqqgnKTmmXAXZwX3Br1Dr_NZ-EtzE"
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     SERVER_NAME: str

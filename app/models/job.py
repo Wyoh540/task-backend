@@ -1,3 +1,4 @@
+import uuid
 from enum import Enum
 from datetime import datetime, timezone
 
@@ -52,6 +53,16 @@ class Job(SQLModel, table=True):
     language: Language = Relationship()
     team: Team = Relationship()
     owner: User = Relationship()
+
+
+class JobTasks(SQLModel, table=True):
+    """任务执行结果关联表"""
+
+    __tablename__ = "job_tasks"
+
+    id: int | None = Field(primary_key=True, default=None, description="主键ID")
+    job_id: int = Field(foreign_key="job.id", nullable=False, ondelete="CASCADE", description="任务ID")
+    task_id: uuid.UUID = Field(max_length=36, nullable=False, description="运行ID")
 
 
 class WorkNode(SQLModel, table=True):

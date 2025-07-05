@@ -1,9 +1,10 @@
 import uuid
-from typing import Any
+from typing import Any, Literal
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, TEXT
-
+from pydantic import computed_field
+from celery.result import AsyncResult
 
 from app.models.job import Language, Team, WorkNode
 from app.schemas.user import UserPubic
@@ -72,9 +73,47 @@ class WorkNodeCreate(SQLModel):
 
 
 class TaskResult(SQLModel):
-    """任务执行结果"""
+    """任务执行结果详情"""
 
     task_id: uuid.UUID
-    status: str
-    result: Any | None = None
-    date_done: datetime | None = None
+
+    @computed_field
+    @property
+    def status(self) -> Literal["PENDING", "STARTED", "SUCCESS", "FAILURE", "RETRY"]:
+        """任务状态"""
+        result = AsyncResult(str(self.task_id))
+        return result.status
+
+    @computed_field
+    @property
+    def result(self) -> Any | None:
+        """任务执行结果"""
+        result = AsyncResult(str(self.task_id))
+        return result.result if result.successful() else None
+
+    @computed_field
+    @property
+    def date_done(self) -> datetime | None:
+        """任务完成时间"""
+        result = AsyncResult(str(self.task_id))
+        return result.date_done if result.successful() else None
+
+
+class TaskResultList(SQLModel):
+    """任务执行结果列表"""
+
+    task_id: uuid.UUID
+
+    @computed_field
+    @property
+    def status(self) -> Literal["PENDING", "STARTED", "SUCCESS", "FAILURE", "RETRY"]:
+        """任务状态"""
+        result = AsyncResult(str(self.task_id))
+        return result.status
+
+    @computed_field
+    @property
+    def date_done(self) -> datetime | None:
+        """任务完成时间"""
+        result = AsyncResult(str(self.task_id))
+        return result.date_done if result.successful() else None

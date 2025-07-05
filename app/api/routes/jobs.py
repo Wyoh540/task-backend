@@ -8,12 +8,13 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from celery.result import AsyncResult
 
 from app.api.deps import SessionDep, CurrentUser
-from app.models import Job, Team
+from app.models import Job, Team, JobTasks
 from app.schemas import (
     TeamCreate,
     TeamPubilc,
     JobCreate,
     JobOut,
+    TaskResultList,
     TaskResult,
 )
 from app.services.job import JobService
@@ -72,12 +73,21 @@ def run_task(session: SessionDep, team_id: int, job_id: int):
     result = execute_script_content.apply_async(
         (task.script_content, "python", {"timeout": 10}), ignore_result=task.ignore_result
     )
-    return {
-        "run_id": result.id,
-        "status": result.status,
-        "result": result.result if result.successful() else None,
-        "date_done": result.date_done,
-    }
+    job_task = JobTasks(
+        job_id=job_id,
+        task_id=uuid.UUID(result.id),
+    )
+    session.add(job_task)
+    session.commit()
+    session.refresh(job_task)
+    return job_task
+
+
+@router.get("/{team_id}/job/{job_id}/result/", response_model=Page[TaskResultList])
+def list_job_tasks(session: SessionDep, job_id: int):
+    """获取任务执行结果列表"""
+    statement = select(JobTasks).where(JobTasks.job_id == job_id)
+    return paginate(session, statement)
 
 
 @router.get("/{team_id}/job/{job_id}/result/{task_id}", response_model=TaskResult)
