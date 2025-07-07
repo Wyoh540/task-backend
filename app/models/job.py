@@ -85,3 +85,19 @@ class WorkNode(SQLModel, table=True):
 
     create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     update_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class TeamMember(SQLModel, table=True):
+    """空间成员表，含管理员标记"""
+
+    __tablename__ = "team_member"
+
+    id: int | None = Field(primary_key=True, default=None)
+    team_id: int = Field(foreign_key="team.id", nullable=False, ondelete="CASCADE")
+    user_id: int = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    is_admin: bool = Field(default=False, nullable=False, description="是否为管理员")
+
+    # 可选：创建时间等字段
+    create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    user: User = Relationship()

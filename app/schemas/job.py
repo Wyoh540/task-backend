@@ -117,3 +117,27 @@ class TaskResultList(SQLModel):
         """任务完成时间"""
         result = AsyncResult(str(self.task_id))
         return result.date_done if result.successful() else None
+
+
+class TeamMemberBase(SQLModel):
+    user_id: int
+    is_admin: bool = False
+
+
+class TeamMemberCreate(TeamMemberBase):
+    pass
+
+
+class TeamMemberUpdate(SQLModel):
+    is_admin: bool | None = None
+
+
+class TeamMemberPublic(TeamMemberBase):
+    id: int
+    user: UserPubic | None = None
+
+
+class TeamMemberList(SQLModel):
+    id: int
+    user: UserPubic | None = None
+    is_admin: bool

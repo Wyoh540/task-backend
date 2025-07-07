@@ -8,7 +8,7 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from celery.result import AsyncResult
 
 from app.api.deps import SessionDep, CurrentUser
-from app.models import Job, Team, JobTasks
+from app.models import Job, Team, JobTasks, TeamMember, User
 from app.schemas import (
     TeamCreate,
     TeamPubilc,
@@ -16,12 +16,17 @@ from app.schemas import (
     JobOut,
     TaskResultList,
     TaskResult,
+    TeamMemberCreate,
+    TeamMemberUpdate,
+    TeamMemberPublic,
+    TeamMemberList,
 )
 from app.services.job import JobService
 from app.tasks.task import execute_script_content
 from app.celery import celery_app
+from app.schemas.user import UserPubic
 
-router = APIRouter(prefix="/group", tags=["Tasks"])
+router = APIRouter(prefix="/team", tags=["Tasks"])
 
 
 @router.get("/", response_model=Page[Team])
@@ -95,7 +100,7 @@ def get_task_result(session: SessionDep, team_id: int, job_id: int, task_id: str
     """获取celery任务执行结果"""
     job = session.get(Job, job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="任务不存在")
+        raise HTTPException(status_code=404, detail="Job not found")
 
     async_result = AsyncResult(task_id, app=celery_app)
     return {
@@ -114,3 +119,57 @@ def delete_task_result(session: SessionDep, team_id: int, job_id: int, task_id: 
 
     session.delete(task_result)
     session.commit()
+
+
+@router.post("/{team_id}/members", response_model=TeamMemberPublic)
+def add_team_member(session: SessionDep, team_id: int, member: TeamMemberCreate):
+    """添加空间成员（可指定是否为管理员）"""
+    team = session.get(Team, team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    user = session.get(User, member.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # 检查是否已存在
+    statement = select(TeamMember).where((TeamMember.team_id == team_id) & (TeamMember.user_id == member.user_id))
+    if session.exec(statement).first():
+        raise HTTPException(status_code=400, detail="User already in team")
+    team_member = TeamMember(team_id=team_id, user_id=member.user_id, is_admin=member.is_admin)
+    session.add(team_member)
+    session.commit()
+    session.refresh(team_member)
+    return team_member
+
+
+@router.delete("/{team_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_team_member(session: SessionDep, team_id: int, user_id: int):
+    """移除空间成员"""
+    statement = select(TeamMember).where((TeamMember.team_id == team_id) & (TeamMember.user_id == user_id))
+    member = session.exec(statement).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    session.delete(member)
+    session.commit()
+
+
+@router.patch("/{team_id}/members/{user_id}", response_model=TeamMemberPublic)
+def update_team_member(session: SessionDep, team_id: int, user_id: int, update: TeamMemberUpdate):
+    """设置/取消管理员"""
+    statement = select(TeamMember).where((TeamMember.team_id == team_id) & (TeamMember.user_id == user_id))
+    member = session.exec(statement).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if update.is_admin is not None:
+        member.is_admin = update.is_admin
+    session.add(member)
+    session.commit()
+    session.refresh(member)
+    return member
+
+
+@router.get("/{team_id}/members", response_model=Page[TeamMemberList])
+def list_team_members(session: SessionDep, team_id: int):
+    """获取空间成员列表（含管理员标记）"""
+    statement = select(TeamMember).where(TeamMember.team_id == team_id)
+
+    return paginate(session=session, query=statement)
