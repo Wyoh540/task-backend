@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from sqlmodel import select
 from fastapi_pagination import Page
 from fastapi.exceptions import HTTPException
@@ -84,15 +84,19 @@ def run_task(session: SessionDep, team_id: int, job_id: int):
 
 
 @router.get("/{team_id}/job/{job_id}/result/", response_model=Page[TaskResultList])
-def list_job_tasks(session: SessionDep, job_id: int):
+def list_job_tasks(session: SessionDep, team_id: int, job_id: int):
     """获取任务执行结果列表"""
     statement = select(JobTasks).where(JobTasks.job_id == job_id)
     return paginate(session, statement)
 
 
 @router.get("/{team_id}/job/{job_id}/result/{task_id}", response_model=TaskResult)
-def get_task_result(task_id: str):
+def get_task_result(session: SessionDep, team_id: int, job_id: int, task_id: str):
     """获取celery任务执行结果"""
+    job = session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
     async_result = AsyncResult(task_id, app=celery_app)
     return {
         "task_id": task_id,
@@ -100,3 +104,13 @@ def get_task_result(task_id: str):
         "result": async_result.result if async_result.successful() else None,
         "date_done": async_result.date_done,
     }
+
+
+@router.delete("/{team_id}/job/{job_id}/result/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task_result(session: SessionDep, team_id: int, job_id: int, task_id: str):
+    """删除任务结果"""
+    statement = select(JobTasks).where(JobTasks.task_id == uuid.UUID(task_id))
+    task_result = session.exec(statement).first()
+
+    session.delete(task_result)
+    session.commit()
