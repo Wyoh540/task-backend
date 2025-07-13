@@ -1,0 +1,1 @@
+CREATE DATABASE IF NOT EXISTS task_backend CHARACTER SET UTF8mb4 COLLATE utf8mb4_general_ci;

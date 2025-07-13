@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  mysql:
+    # 如果需要在ARM架构上运行，可以使用 mariadb:10.5.8 镜像
+    image: mysql:5.7.24
+    # image: mariadb:10.5.8  # For ARM
+    command: [ "--log-bin=mysql-bin", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--innodb_flush_log_at_trx_commit=1", "--sync_binlog=1", "--server-id=1" ]
+    environment:
+      MYSQL_DATABASE: "task_backend"
+      MYSQL_ROOT_PASSWORD: "task!2025"
+    volumes:
+      - ./.docker_data/mysql:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    expose:
+      - "3306"
+    restart: always
+
+  redis:
+    image: redis:5.0.5
+    command: redis-server
+    volumes:
+      - ./.docker_data/redis:/data
+    expose:
+      - "6379"
+    restart: always
+
+  task-server:
+    env_file:
+      - ./.env.local
+    image: task-server:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: [ "fastapi", "run", "--workers", "4", "app/main.py" ]
+    expose:
+      - "8000"
+    depends_on:
+      - mysql
+      - redis
+
+  task-worker:
+    env_file:
+      - ./.env.local
+    image: task-server:latest
+    command: [ "celery", "-A", "app.celery", "worker", "--concurrency=2", "-l", "INFO" ]
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - task-server
