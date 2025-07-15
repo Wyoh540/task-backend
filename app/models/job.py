@@ -30,6 +30,8 @@ class Team(SQLModel, table=True):
     create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     update_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    jobs: list["Job"] = Relationship(back_populates="team")
+
 
 class Job(SQLModel, table=True):
     """任务信息表"""
@@ -51,7 +53,7 @@ class Job(SQLModel, table=True):
     update_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     language: Language = Relationship()
-    team: Team = Relationship()
+    team: Team = Relationship(back_populates="jobs")
     owner: User = Relationship()
 
 

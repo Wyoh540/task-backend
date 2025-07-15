@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: "task_backend"
       MYSQL_ROOT_PASSWORD: "task!2025"
     volumes:
-      - ./.docker_data/mysql:/var/lib/mysql
+      - /task-docker_data/mysql:/var/lib/mysql
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     expose:
       - "3306"
@@ -20,7 +20,7 @@ services:
     image: redis:5.0.5
     command: redis-server
     volumes:
-      - ./.docker_data/redis:/data
+      - /task-docker_data/redis:/data
     expose:
       - "6379"
     restart: always

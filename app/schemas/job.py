@@ -3,7 +3,7 @@ from typing import Any, Literal
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, TEXT
-from pydantic import computed_field
+from pydantic import computed_field, model_serializer, ConfigDict
 from celery.result import AsyncResult
 
 from app.models.job import Language, Team, WorkNode
@@ -30,16 +30,51 @@ class TeamUpdate(SQLModel):
     description: str | None
 
 
-class TeamPubilc(TeamBase):
+class TeamPubilc(SQLModel):
     """任务组公共信息"""
 
-    id: int | None = Field(primary_key=True, default=None)
-    name: str = Field(max_length=20)
-    description: str = Field(sa_type=TEXT(), nullable=True)
-    create_by: int = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    id: int
+    name: str
+    description: str
+    create_by: int
 
-    create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    update_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    create_at: datetime
+    update_at: datetime
+
+    jobs: list["JobOut"]
+
+    @computed_field
+    @property
+    def job_count(self) -> int:
+        return len(self.jobs)
+
+    @model_serializer
+    def ser_model(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "create_by": self.create_by,
+            "create_at": self.create_at,
+            "update_at": self.update_at,
+            "job_count": self.job_count,
+        }
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": 1,
+                    "name": "admin",
+                    "description": "admin 空间",
+                    "create_by": 1,
+                    "create_at": "2025-07-05T09:56:14",
+                    "update_at": "2025-07-05T09:56:14",
+                    "job_count": 1,
+                }
+            ]
+        }
+    )
 
 
 class JobBase(SQLModel):
@@ -52,7 +87,8 @@ class JobBase(SQLModel):
 class JobOut(JobBase):
     id: int
     language: Language
-    team: Team
+    team_id: int
+    # team: Team
     owner: UserPubic
 
 

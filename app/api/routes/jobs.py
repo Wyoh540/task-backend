@@ -29,7 +29,7 @@ from app.schemas.user import UserPubic
 router = APIRouter(prefix="/team", tags=["Tasks"])
 
 
-@router.get("/", response_model=Page[Team])
+@router.get("/", response_model=Page[TeamPubilc])
 def get_teams(session: SessionDep):
     """获取空间列表"""
     statement = select(Team)
