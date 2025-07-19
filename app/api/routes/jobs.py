@@ -55,6 +55,16 @@ def get_team(session: SessionDep, team_id: int):
     return team
 
 
+@router.delete("/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_team(session: SessionDep, team_id: int):
+    """删除空间"""
+    team = session.get(Team, team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    session.delete(team)
+    session.commit()
+
+
 @router.get("/{team_id}/job", response_model=Page[JobOut])
 def get_tasks(session: SessionDep, team_id: int):
     statement = select(Job).where(Job.team_id == team_id)

@@ -2,8 +2,8 @@ import uuid
 from typing import Any, Literal
 from datetime import datetime, timezone
 
-from sqlmodel import SQLModel, Field, TEXT
-from pydantic import computed_field, model_serializer, ConfigDict
+from sqlmodel import SQLModel, TEXT
+from pydantic import computed_field, field_serializer, Field
 from celery.result import AsyncResult
 
 from app.models.job import Language, Team, WorkNode
@@ -41,40 +41,11 @@ class TeamPubilc(SQLModel):
     create_at: datetime
     update_at: datetime
 
-    jobs: list["JobOut"]
+    jobs: list["JobOut"] = Field(serialization_alias="job_count")
 
-    @computed_field
-    @property
-    def job_count(self) -> int:
+    @field_serializer("jobs")
+    def job_count(self, jobs: list["JobOut"]) -> int:
         return len(self.jobs)
-
-    @model_serializer
-    def ser_model(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "create_by": self.create_by,
-            "create_at": self.create_at,
-            "update_at": self.update_at,
-            "job_count": self.job_count,
-        }
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "id": 1,
-                    "name": "admin",
-                    "description": "admin 空间",
-                    "create_by": 1,
-                    "create_at": "2025-07-05T09:56:14",
-                    "update_at": "2025-07-05T09:56:14",
-                    "job_count": 1,
-                }
-            ]
-        }
-    )
 
 
 class JobBase(SQLModel):
