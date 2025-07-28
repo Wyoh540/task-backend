@@ -148,3 +148,8 @@ class TeamMemberList(SQLModel):
     id: int
     user: UserPubic | None = None
     is_admin: bool
+
+
+class CreateLanguage(SQLModel):
+
+    language_name: str
