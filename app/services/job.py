@@ -29,6 +29,15 @@ class JobService:
             db.refresh(job)
         return job
 
+    @classmethod
+    def update_job(cls, db: Session, job: Job, job_update: JobCreate) -> Job:
+        """更新任务"""
+        job.sqlmodel_update(job, update=job_update.model_dump(exclude_unset=True))
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        return job
+
 
 class WorkNodeService:
     """工作节点管理"""

@@ -66,6 +66,8 @@ class JobTasks(SQLModel, table=True):
     job_id: int = Field(foreign_key="job.id", nullable=False, ondelete="CASCADE", description="任务ID")
     task_id: uuid.UUID = Field(max_length=36, nullable=False, description="运行ID")
 
+    create_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 
 class WorkNode(SQLModel, table=True):
     """工作节点表"""

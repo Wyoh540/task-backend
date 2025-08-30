@@ -2,7 +2,7 @@ from sqlmodel import Session, select
 
 
 from app.models import User
-from app.schemas.user import UserPubic, UserCreate
+from app.schemas.user import UserPubic, UserCreate, UserUpdate
 from app.core.security import get_password_hash
 
 
@@ -18,4 +18,13 @@ class UserService:
             db.add(user)
             db.commit()
             db.refresh(user)
+        return user
+
+    @classmethod
+    def update_user(cls, db: Session, user: User, user_update: UserUpdate) -> UserPubic:
+        """更新用户信息"""
+        user.sqlmodel_update(user, update=user_update.model_dump(exclude_unset=True))
+        db.add(user)
+        db.commit()
+        db.refresh(user)
         return user

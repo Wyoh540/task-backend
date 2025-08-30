@@ -67,8 +67,13 @@ class JobCreate(JobBase):
     language_id: int
 
 
-class JobUpdate(JobBase):
-    pass
+class JobUpdate(SQLModel):
+    name: str | None = None
+    description: str | None = None
+    script_content: str | None = None
+    script_path: str | None = None
+    ignore_result: bool | None = None
+    language_id: int | None = None
 
 
 class WorkNodeCreate(SQLModel):
@@ -79,10 +84,21 @@ class WorkNodeCreate(SQLModel):
     status: WorkNode.NodeStatus = WorkNode.NodeStatus.ONLINE
 
 
+class Result(SQLModel):
+    """任务执行结果"""
+
+    stdout: str
+    stderr: str
+    return_code: int
+    success: bool
+
+
 class TaskResult(SQLModel):
     """任务执行结果详情"""
 
     task_id: uuid.UUID
+
+    create_at: datetime
 
     @computed_field
     @property
@@ -93,7 +109,7 @@ class TaskResult(SQLModel):
 
     @computed_field
     @property
-    def result(self) -> Any | None:
+    def result(self) -> Result | None:
         """任务执行结果"""
         result = AsyncResult(str(self.task_id))
         return result.result if result.successful() else None
@@ -110,6 +126,8 @@ class TaskResultList(SQLModel):
     """任务执行结果列表"""
 
     task_id: uuid.UUID
+
+    create_at: datetime
 
     @computed_field
     @property
@@ -151,5 +169,4 @@ class TeamMemberList(SQLModel):
 
 
 class CreateLanguage(SQLModel):
-
     language_name: str

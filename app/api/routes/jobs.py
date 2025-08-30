@@ -13,6 +13,7 @@ from app.schemas import (
     TeamCreate,
     TeamPubilc,
     JobCreate,
+    JobUpdate,
     JobOut,
     TaskResultList,
     TaskResult,
@@ -24,7 +25,7 @@ from app.schemas import (
 from app.services.job import JobService
 from app.tasks.task import execute_script_content
 from app.celery import celery_app
-from app.schemas.user import UserPubic
+
 
 router = APIRouter(prefix="/team", tags=["Tasks"])
 
@@ -66,16 +67,37 @@ def delete_team(session: SessionDep, team_id: int):
 
 
 @router.get("/{team_id}/job", response_model=Page[JobOut])
-def get_tasks(session: SessionDep, team_id: int):
+def list_jobs(session: SessionDep, team_id: int):
+    """获取任务列表"""
     statement = select(Job).where(Job.team_id == team_id)
     return paginate(session, statement)
 
 
 @router.post("/{team_id}/job", response_model=JobOut)
-def create_task(session: SessionDep, team_id: int, job_obj: JobCreate, current_user: CurrentUser):
+def create_job(session: SessionDep, team_id: int, job_obj: JobCreate, current_user: CurrentUser):
     """创建任务"""
     job = JobService.create_job(db=session, job_create=job_obj, team_id=team_id, user_id=current_user.id)
 
+    return job
+
+
+@router.delete("/{team_id}/job/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_job(session: SessionDep, team_id: int, job_id: int):
+    """删除任务"""
+    job = session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    session.delete(job)
+    session.commit()
+
+
+@router.put("/{team_id}/job/{job_id}", response_model=JobOut)
+def update_job(session: SessionDep, team_id: int, job_id: int, job_update: JobUpdate):
+    """更新任务"""
+    job = session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = JobService.update_job(db=session, job=job, job_update=job_update)
     return job
 
 
@@ -108,13 +130,15 @@ def list_job_tasks(session: SessionDep, team_id: int, job_id: int):
 @router.get("/{team_id}/job/{job_id}/result/{task_id}", response_model=TaskResult)
 def get_task_result(session: SessionDep, team_id: int, job_id: int, task_id: str):
     """获取celery任务执行结果"""
-    job = session.get(Job, job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    statement = select(JobTasks).where((JobTasks.job_id == job_id) & (JobTasks.task_id == uuid.UUID(task_id)))
+    job_task = session.exec(statement).first()
+    if not job_task:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     async_result = AsyncResult(task_id, app=celery_app)
     return {
         "task_id": task_id,
+        "create_at": job_task.create_at,
         "status": async_result.status,
         "result": async_result.result if async_result.successful() else None,
         "date_done": async_result.date_done,
@@ -126,13 +150,14 @@ def delete_task_result(session: SessionDep, team_id: int, job_id: int, task_id: 
     """删除任务结果"""
     statement = select(JobTasks).where(JobTasks.task_id == uuid.UUID(task_id))
     task_result = session.exec(statement).first()
-
+    if not task_result:
+        raise HTTPException(status_code=404, detail="Task result not found")
     session.delete(task_result)
     session.commit()
 
 
 @router.post("/{team_id}/members", response_model=TeamMemberPublic)
-def add_team_member(session: SessionDep, team_id: int, member: TeamMemberCreate):
+def create_team_member(session: SessionDep, team_id: int, member: TeamMemberCreate):
     """添加空间成员（可指定是否为管理员）"""
     team = session.get(Team, team_id)
     if not team:
