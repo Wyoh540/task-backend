@@ -28,3 +28,15 @@ alembic upgrade head
 ```bash
 celery -A app.celery worker -p solo --concurrency=2  --loglevel=INFO
 ```
+
+## 构建
+
+```bash
+docker build -t task-server .
+```
+
+## 部署
+
+```bash
+docker compose up -d
+```
